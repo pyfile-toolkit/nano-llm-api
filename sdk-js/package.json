@@ -1,0 +1,15 @@
+{
+  "name": "@pyfile-toolkit/agent-api",
+  "version": "1.0.0",
+  "description": "Pay-per-call LLM + data API for AI agents over x402 (USDC on Base/Polygon/Arbitrum) or Lightning L402.",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": { ".": { "import": "./src/index.js" } },
+  "files": ["src", "README.md"],
+  "keywords": ["x402", "ai-agents", "llm", "mcp", "usdc", "base", "lightning", "l402"],
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/pyfile-toolkit/nano-llm-api.git", "directory": "sdk-js" },
+  "homepage": "https://github.com/pyfile-toolkit/nano-llm-api",
+  "engines": { "node": ">=18" }
+}
