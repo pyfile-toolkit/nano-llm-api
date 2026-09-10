@@ -1,35 +1,85 @@
-# nano-llm-api
+# Pyfile LLM & Data API
 
-Pay-per-query LLM API over Nano (`nano:mainnet`, HTTP 402, x402 exact scheme).
+Pay-per-call **LLM + data API for AI agents**. No accounts, no API keys, no subscriptions — a request pays for itself over **[x402](https://www.x402.org/)** (USDC) or **Lightning (L402)**.
 
-Verified seller on https://pursekeeper.dev/sellers (ledgers #18/#19).
+[![Agent-readiness](https://img.shields.io/badge/Circle%20for%20Agents-95%2F100-brightgreen)](https://agents.circle.com/sell/score?url=pyfile-agent.taile3ff35.ts.net)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.pyfile--toolkit%2Fpyfile--llm-blue)](https://registry.modelcontextprotocol.io/v0/servers?limit=100&cursor=io.github)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Endpoint
+## What it does
 
-- `POST https://sao-nova-flex-tournaments.trycloudflare.com/v1/chat/completions`
-- `GET /health` and `GET /v1/price` are free.
+| Endpoint | Price | What you get |
+|---|---|---|
+| `POST /v1/chat/completions` | $0.001 | LLM completion (`gemini-3.6-flash`, `gpt-oss-120b`) |
+| `GET /data/dns` | $0.002 | DNS-over-HTTPS lookup |
+| `GET /data/crypto`, `/data/crypto/trending`, `/data/crypto/history` | $0.002 | CoinGecko prices / trending / history |
+| `GET /data/fx` | $0.002 | FX rates |
+| `GET /data/whois` | $0.002 | Domain registration (RDAP) |
+| `GET /data/wiki` | $0.002 | Wikipedia summary |
+| `GET /data/weather` | $0.002 | Current weather |
+| `GET /data/gas/base` | $0.002 | Base L2 gas price |
+| `GET /data/abi` | $0.002 | Ethereum signature lookup |
+| `GET /data/wallet/balance` | $0.002 | EVM wallet balance |
+| `GET /data/bolt11/decode` | $0.002 | Decode a Lightning invoice |
+| `GET /data/hash`, `/data/hmac`, `/data/encode`, `/data/decode` | $0.002 | Hashing / encoding (local, instant) |
+| `GET /data/btc/fees`, `/data/btc/address` | $0.002 | Bitcoin fees / address balance |
+| `GET /data/ip`, `/data/network/status`, `/data/ct`, `/data/url` | $0.002 | IP geo, block heights, cert transparency, URL metadata |
 
-## Flow
+Free: `GET /health`, `GET /v1/price`, `GET /.well-known/x402` (discovery), `GET /openapi.json`.
 
-1. Unpaid POST returns `402` with `pay_to`, `price_raw`, `asset=XNO`, `network=nano:mainnet`, `scheme=exact`, and `quote=sha256(request body)`.
-2. Buyer sends 0.001 XNO to `pay_to`, retries with `X-Nano-Payment: <send block hash>`.
-3. Server verifies the block via `pursekeeper.dev/v1/verify` (no Nano node), records the hash, answers.
+## Payment rails
 
-Replay-safe: each send block hash is consumed exactly once (see `server.mjs`, `payment_reused`).
+The same resources are payable three ways:
 
-## Scripts
+- **x402 (USDC on Base / Polygon / Arbitrum)** — unpaid request returns `402` with a `payment-required` header (base64 JSON, `accepts[]` with asset, network, amount, payTo). Sign, retry with `X-PAYMENT`.
+- **Lightning L402** — the `GET` variants return a `WWW-Authenticate: L402` challenge with a BOLT11 invoice; retry with `Authorization: L402 <macaroon>:<preimage>`.
+- **Nano (`nano:mainnet`, XNO)** — legacy rail; `402` carries `pay_to`, `price_raw`, and `quote=sha256(body)`; retry with `X-Nano-Payment: <send block hash>`.
 
-- `server.mjs` — the HTTP server (402 + verification + consumed-hash store).
-- `receive.mjs` — opens the wallet and receives pending blocks (local PoW).
-- `send.mjs` — sends Nano from the wallet (work via rainstorm.city for the send threshold).
+## SDK
 
-## Wallet
-
-`nano_3uojbn47b5xqcbs4yibbasamn8aeyqxgyi1z8peogwtdn6z3kagjanjpz4ss`
-
-## Publish
+Tiny zero-dependency client (Node 18+), no private keys inside:
 
 ```bash
-git remote add origin https://github.com/pyfile-toolkit/nano-llm-api.git
-git push -u origin main
+npm i github:pyfile-toolkit/nano-llm-api
 ```
+
+```js
+import { AgentApi } from '@pyfile-toolkit/agent-api';
+
+const api = new AgentApi({
+  async onPaymentRequired(terms) {
+    const signed = await myWallet.signX402(terms.accepts[0]); // your wallet
+    return { headers: { 'X-PAYMENT': signed } };
+  },
+});
+
+const { prices } = await api.crypto('bitcoin,nano');        // $0.002
+const answer = await api.chat({ messages: [{ role: 'user', content: 'hi' }] }); // $0.001
+```
+
+See [`sdk-js/`](./sdk-js) for the full API.
+
+## MCP
+
+Also served as an MCP server (streamable-HTTP):
+
+- **Official MCP Registry**: `io.github.pyfile-toolkit/pyfile-llm`
+- Endpoint: `https://pyfile-agent.taile3ff35.ts.net:8443/mcp`
+- Tools: `chat` (Bearer-protected), `dns_lookup`, `crypto_price`, `base_gas`, `wikipedia_summary`
+
+## Discovery
+
+- x402 manifest: `https://pyfile-agent.taile3ff35.ts.net/.well-known/x402`
+- OpenAPI 3.1: `https://pyfile-agent.taile3ff35.ts.net/openapi.json`
+- Circle for Agents readiness: **95/100** (Origin-hosted)
+
+## Architecture
+
+- `x402_base_api.mjs` — x402 USDC server (`:3004`), multi-chain.
+- `l402-api/index.js` — Lightning L402 + MCP server (`:3002`).
+- `nano_llm_api.mjs` — Nano XNO server (`:3003`).
+- All three share one free backend and are exposed on stable HTTPS URLs via Tailscale Funnel.
+
+## License
+
+MIT
