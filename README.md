@@ -35,9 +35,11 @@ The same resources are payable three ways:
 - **Lightning L402** — the `GET` variants return a `WWW-Authenticate: L402` challenge with a BOLT11 invoice; retry with `Authorization: L402 <macaroon>:<preimage>`.
 - **Nano (`nano:mainnet`, XNO)** — legacy rail; `402` carries `pay_to`, `price_raw`, and `quote=sha256(body)`; retry with `X-Nano-Payment: <send block hash>`.
 
-## SDK
+## SDKs
 
-Tiny zero-dependency client (Node 18+), no private keys inside:
+Tiny zero-dependency clients, no private keys inside.
+
+**JavaScript** (Node 18+):
 
 ```bash
 npm i github:pyfile-toolkit/nano-llm-api
@@ -53,11 +55,26 @@ const api = new AgentApi({
   },
 });
 
-const { prices } = await api.crypto('bitcoin,nano');        // $0.002
-const answer = await api.chat({ messages: [{ role: 'user', content: 'hi' }] }); // $0.001
+const { prices } = await api.crypto('bitcoin,nano');        // $0.01
+const answer = await api.chat({ messages: [{ role: 'user', content: 'hi' }] }); // $0.005
+const brief = await api.brief({ topic: 'defi' });           // $0.03
 ```
 
-See [`sdk-js/`](./sdk-js) for the full API.
+**Python** (3.9+, stdlib only):
+
+```bash
+pip install git+https://github.com/pyfile-toolkit/nano-llm-api#subdirectory=sdk-py
+```
+
+```python
+from pyfile_agent_api import AgentApi
+
+api = AgentApi(on_payment_required=pay)  # pay(terms, ctx) -> {"headers": {"X-PAYMENT": signed}}
+print(api.crypto("bitcoin,nano"))        # $0.01
+print(api.brief(topic="defi"))           # $0.03
+```
+
+See [`sdk-js/`](./sdk-js) and [`sdk-py/`](./sdk-py) for the full API.
 
 ## MCP
 
