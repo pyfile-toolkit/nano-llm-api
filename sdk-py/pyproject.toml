@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyfile-agent-api"
+version = "1.0.0"
+description = "Pay-per-call LLM + data API for AI agents (x402 USDC on Base/Polygon/Arbitrum, or Lightning L402)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["x402", "ai-agents", "llm", "mcp", "usdc", "base", "lightning", "l402"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/pyfile-toolkit/nano-llm-api"
+Repository = "https://github.com/pyfile-toolkit/nano-llm-api"
+
+[tool.setuptools.packages.find]
+where = ["src"]
