@@ -2,6 +2,8 @@
 
 Pay-per-call **LLM + data API for AI agents**. No accounts, no API keys, no subscriptions — a request pays for itself over **[x402](https://www.x402.org/)** (USDC) or **Lightning (L402)**.
 
+**Website:** [pyfile-toolkit.github.io](https://pyfile-toolkit.github.io) — overview, pricing and discovery for all three payment rails.
+
 [![Agent-readiness](https://img.shields.io/badge/Circle%20for%20Agents-95%2F100-brightgreen)](https://agents.circle.com/sell/score?url=pyfile-agent.taile3ff35.ts.net)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.pyfile--toolkit%2Fpyfile--llm-blue)](https://registry.modelcontextprotocol.io/v0/servers?limit=100&cursor=io.github)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
