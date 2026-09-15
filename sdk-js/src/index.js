@@ -117,7 +117,7 @@ export class AgentApi {
   /** Бесплатно: цены. */
   price() { return this.request('/v1/price'); }
 
-  /** Платно ($0.001): чат-комплит. */
+  /** Платно ($0.005): чат-комплит. */
   chat({ model = 'gemini-3.6-flash', messages, max_tokens } = {}) {
     if (!Array.isArray(messages) || !messages.length) {
       throw new Error('messages[] is required');
@@ -128,7 +128,7 @@ export class AgentApi {
     });
   }
 
-  /** Обобщённый вызов data-эндпоинта ($0.002): /data/<name>?<params>. */
+  /** Обобщённый вызов data-эндпоинта ($0.003): /data/<name>?<params>. */
   data(name, params = {}) {
     return this.request(`/data/${name}`, { query: params });
   }
