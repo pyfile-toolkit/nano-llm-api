@@ -12,20 +12,20 @@ Pay-per-call **LLM + data API for AI agents**. No accounts, no API keys, no subs
 
 | Endpoint | Price | What you get |
 |---|---|---|
-| `POST /v1/chat/completions` | $0.001 | LLM completion (`gemini-3.6-flash`, `gpt-oss-120b`) |
-| `GET /data/dns` | $0.002 | DNS-over-HTTPS lookup |
-| `GET /data/crypto`, `/data/crypto/trending`, `/data/crypto/history` | $0.002 | CoinGecko prices / trending / history |
-| `GET /data/fx` | $0.002 | FX rates |
-| `GET /data/whois` | $0.002 | Domain registration (RDAP) |
-| `GET /data/wiki` | $0.002 | Wikipedia summary |
-| `GET /data/weather` | $0.002 | Current weather |
-| `GET /data/gas/base` | $0.002 | Base L2 gas price |
-| `GET /data/abi` | $0.002 | Ethereum signature lookup |
-| `GET /data/wallet/balance` | $0.002 | EVM wallet balance |
-| `GET /data/bolt11/decode` | $0.002 | Decode a Lightning invoice |
-| `GET /data/hash`, `/data/hmac`, `/data/encode`, `/data/decode` | $0.002 | Hashing / encoding (local, instant) |
-| `GET /data/btc/fees`, `/data/btc/address` | $0.002 | Bitcoin fees / address balance |
-| `GET /data/ip`, `/data/network/status`, `/data/ct`, `/data/url` | $0.002 | IP geo, block heights, cert transparency, URL metadata |
+| `POST /v1/chat/completions` | $0.005 | LLM completion (`gemini-3.6-flash`, `gpt-oss-120b`) |
+| `GET /data/dns` | $0.003 | DNS-over-HTTPS lookup |
+| `GET /data/crypto`, `/data/crypto/trending`, `/data/crypto/history` | $0.003 | CoinGecko prices / trending / history |
+| `GET /data/fx` | $0.003 | FX rates |
+| `GET /data/whois` | $0.003 | Domain registration (RDAP) |
+| `GET /data/wiki` | $0.003 | Wikipedia summary |
+| `GET /data/weather` | $0.003 | Current weather |
+| `GET /data/gas/base` | $0.003 | Base L2 gas price |
+| `GET /data/abi` | $0.003 | Ethereum signature lookup |
+| `GET /data/wallet/balance` | $0.003 | EVM wallet balance |
+| `GET /data/bolt11/decode` | $0.003 | Decode a Lightning invoice |
+| `GET /data/hash`, `/data/hmac`, `/data/encode`, `/data/decode` | $0.003 | Hashing / encoding (local, instant) |
+| `GET /data/btc/fees`, `/data/btc/address` | $0.003 | Bitcoin fees / address balance |
+| `GET /data/ip`, `/data/network/status`, `/data/ct`, `/data/url` | $0.003 | IP geo, block heights, cert transparency, URL metadata |
 
 Free: `GET /health`, `GET /v1/price`, `GET /.well-known/x402` (discovery), `GET /openapi.json`.
 
@@ -57,9 +57,9 @@ const api = new AgentApi({
   },
 });
 
-const { prices } = await api.crypto('bitcoin,nano');        // $0.01
+const { prices } = await api.crypto('bitcoin,nano');        // $0.003
 const answer = await api.chat({ messages: [{ role: 'user', content: 'hi' }] }); // $0.005
-const brief = await api.brief({ topic: 'defi' });           // $0.03
+const brief = await api.brief({ topic: 'defi' });           // $0.10
 ```
 
 **Python** (3.9+, stdlib only):
@@ -72,8 +72,8 @@ pip install git+https://github.com/pyfile-toolkit/nano-llm-api#subdirectory=sdk-
 from pyfile_agent_api import AgentApi
 
 api = AgentApi(on_payment_required=pay)  # pay(terms, ctx) -> {"headers": {"X-PAYMENT": signed}}
-print(api.crypto("bitcoin,nano"))        # $0.01
-print(api.brief(topic="defi"))           # $0.03
+print(api.crypto("bitcoin,nano"))        # $0.003
+print(api.brief(topic="defi"))           # $0.10
 ```
 
 See [`sdk-js/`](./sdk-js) and [`sdk-py/`](./sdk-py) for the full API.
