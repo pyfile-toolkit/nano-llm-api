@@ -4,8 +4,8 @@ Tiny client for a **pay-per-call LLM + data API** for AI agents. Pay in **USDC o
 
 No accounts. No API keys. No subscriptions. The server answers unpaid requests with HTTP `402`, and your code pays.
 
-- **LLM chat** — `gemini-3.6-flash` or `gpt-oss-120b` ($0.001 / call)
-- **Data tools** — DNS, whois, crypto prices, FX rates, Base gas, abi lookup, BOLT11 decode, hashing/encoding, BTC fees, IP geo, cert transparency, URL metadata ($0.002 / call)
+- **LLM chat** — `gemini-3.6-flash` or `gpt-oss-120b` ($0.005 / call)
+- **Data tools** — DNS, whois, crypto prices, FX rates, Base gas, abi lookup, BOLT11 decode, hashing/encoding, BTC fees, IP geo, cert transparency, URL metadata ($0.003 / call)
 
 Live discovery: `https://pyfile-agent.taile3ff35.ts.net/.well-known/x402`
 
@@ -34,10 +34,10 @@ const api = new AgentApi({
 // Free:
 const { prices } = await api.price();
 
-// Paid ($0.001):
+// Paid ($0.005):
 const answer = await api.chat({ messages: [{ role: 'user', content: 'Explain x402 in one line.' }] });
 
-// Paid ($0.002):
+// Paid ($0.003):
 const { prices: coins } = await api.crypto('bitcoin,nano');
 ```
 
@@ -65,9 +65,9 @@ try {
 | `discovery()` | free | x402 resource manifest |
 | `openapi()` | free | OpenAPI 3.1 spec |
 | `price()` | free | current prices |
-| `chat({ messages, model?, max_tokens? })` | $0.001 | LLM completion |
-| `data(name, params)` | $0.002 | generic `/data/<name>` |
-| `dns(name, type?)`, `crypto(ids?)`, `fx(base?)`, `whois(domain)`, `wikipedia(title)`, `weather(lat, lon)`, `baseGas()`, `abi(selector)`, `walletBalance(address, chain?)`, `bolt11Decode(invoice)`, `btcFees()`, `ipInfo(ip)` | $0.002 | convenience wrappers |
+| `chat({ messages, model?, max_tokens? })` | $0.005 | LLM completion |
+| `data(name, params)` | $0.003 | generic `/data/<name>` |
+| `dns(name, type?)`, `crypto(ids?)`, `fx(base?)`, `whois(domain)`, `wikipedia(title)`, `weather(lat, lon)`, `baseGas()`, `abi(selector)`, `walletBalance(address, chain?)`, `bolt11Decode(invoice)`, `btcFees()`, `ipInfo(ip)` | $0.003 | convenience wrappers |
 
 ## Payment rails
 
