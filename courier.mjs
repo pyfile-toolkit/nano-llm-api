@@ -24,7 +24,26 @@ const { hashBlock, verifyBlock, validateWork, checkWork, computeWork, derivePubl
 
 const RPC = 'https://rpc.nano.to';
 const WORK_RPC = 'https://rainstorm.city/api';
+// Пороги PoW в Nano:
+//  send / change  -> fffffff800000000
+//  receive / open -> fffffe0000000000
 const SEND_THRESHOLD = 'fffffff800000000';
+const RECEIVE_THRESHOLD = 'fffffe0000000000';
+const OPEN_PREVIOUS = '0'.repeat(64);
+
+// Подтип блока: open (previous=0...0), иначе receive/send/change по знаку изменения баланса.
+// Если вызывающий явно передал subtype — доверяем ему (но не для root).
+function blockSubtype(block) {
+  if (!block.previous || block.previous === OPEN_PREVIOUS) return 'open';
+  return null; // receive/send/change определим по балансу, если понадобится threshold
+}
+
+// Root для PoW: open -> публичный ключ аккаунта; иначе -> previous.
+function workRoot(block) {
+  return (block.previous && block.previous !== OPEN_PREVIOUS)
+    ? block.previous
+    : derivePublicKey(block.account);
+}
 
 async function rpc(base, action, params = {}) {
   const res = await fetch(base, {
@@ -48,8 +67,9 @@ function normalizeLink(block) {
 }
 
 // Проверка подписанного блока БЕЗ доверия отправителю.
+// Принимает либо сам блок, либо обёртку { block: {...}, subtype? }.
 export async function validateSignedBlock(input) {
-  const b = { ...input };
+  const b = { ...(input && input.block ? input.block : input) };
   if (b.type !== 'state') return { ok: false, error: 'only state blocks' };
   for (const f of ['account', 'previous', 'representative', 'balance', 'signature']) {
     if (!b[f]) return { ok: false, error: 'missing field: ' + f };
@@ -72,14 +92,23 @@ export async function validateSignedBlock(input) {
 
 // Доставка: принять подписанный блок, прикрепить work, broadcast.
 export async function courierBlock(input) {
+  const wrapper = input && input.block ? input : null;
   const v = await validateSignedBlock(input);
   if (!v.ok) return { ok: false, stage: 'validate', error: v.error };
   const b = v.block;
+  // subtype может прийти в обёртке, а не в самом блоке
+  if (!b.subtype && wrapper && wrapper.subtype) b.subtype = wrapper.subtype;
 
-  // work: если нет или невалиден — считаем (send-порог). Платим своим CPU/бесплатным RPC.
+  // Root для PoW (не хэш блока!): open -> pubkey(account), иначе -> previous.
+  const root = workRoot(b);
+  // Порог: open всегда receive-порог; для не-open полагаемся на subtype, иначе send (безопаснее).
+  const subtype = b.subtype || (blockSubtype(b) === 'open' ? 'open' : 'send');
+  const threshold = (subtype === 'open' || subtype === 'receive') ? RECEIVE_THRESHOLD : SEND_THRESHOLD;
+
+  // work: если нет или невалиден — считаем на правильном root.
   let work = b.work;
-  if (!work || !checkWork(work) || !validateWork({ blockHash: v.hash, work, threshold: SEND_THRESHOLD })) {
-    const w = await rpc(WORK_RPC, 'work_generate', { hash: v.hash, difficulty: SEND_THRESHOLD });
+  if (!work || !checkWork(work) || !validateWork({ blockHash: root, work, threshold })) {
+    const w = await rpc(WORK_RPC, 'work_generate', { hash: root, difficulty: threshold });
     if (!w.work) return { ok: false, stage: 'work', error: 'work_generate: ' + JSON.stringify(w) };
     work = w.work;
   }
@@ -94,8 +123,9 @@ export async function courierBlock(input) {
     link_as_account: b.link_as_account,
     work,
     signature: b.signature,
+    subtype,
   };
-  const r = await rpc(RPC, 'process', { json_block: 'true', block: wire });
+  const r = await rpc(RPC, 'process', { json_block: 'true', subtype, block: wire });
   if (r.hash) return { ok: true, hash: r.hash, work };
   return { ok: false, stage: 'process', error: JSON.stringify(r).slice(0, 300) };
 }
