@@ -90,6 +90,50 @@ export async function validateSignedBlock(input) {
   return { ok: true, hash, block: b };
 }
 
+// Доставка ЦЕПОЧКИ подписанных блоков по порядку зависимости (previous -> hash).
+// Зачем: hosted-агент без egress не может залить НИ платёжный send, НИ последующий
+// receive. Если залить только receive, узел ответит "Gap previous block": его
+// previous (payment send) в книге отсутствует. Принимает {chain:[{block,subtype?}]},
+// {blocks:[...]} или одиночный блок.
+export async function courierChain(input) {
+  const items =
+    (input && Array.isArray(input.chain)) ? input.chain :
+    (input && Array.isArray(input.blocks)) ? input.blocks :
+    [input];
+  if (!items.length) return { ok: false, stage: 'input', error: 'empty chain' };
+
+  const valid = [];
+  for (const it of items) {
+    const v = await validateSignedBlock(it);
+    if (!v.ok) return { ok: false, stage: 'validate', error: v.error };
+    const b = v.block;
+    if (!b.subtype && it && it.subtype) b.subtype = it.subtype;
+    valid.push({ block: b, hash: v.hash });
+  }
+
+  // Топосортировка по previous: блок идёт после своего previous, если тот в наборе.
+  const byPrev = new Map();
+  for (const x of valid) byPrev.set(x.block.previous, x);
+  const ordered = [];
+  const seen = new Set();
+  const visit = (x) => {
+    if (seen.has(x.hash)) return;
+    seen.add(x.hash);
+    const parent = byPrev.get(x.block.previous);
+    if (parent && parent !== x) visit(parent);
+    ordered.push(x);
+  };
+  for (const x of valid) visit(x);
+
+  const results = [];
+  for (const x of ordered) {
+    const r = await courierBlock({ block: x.block, subtype: x.block.subtype });
+    results.push({ hash: x.hash, ...r });
+    if (!r.ok) return { ok: false, stage: r.stage, error: r.error, delivered: results };
+  }
+  return { ok: true, delivered: results, hash: results[results.length - 1]?.hash };
+}
+
 // Доставка: принять подписанный блок, прикрепить work, broadcast.
 export async function courierBlock(input) {
   const wrapper = input && input.block ? input : null;
